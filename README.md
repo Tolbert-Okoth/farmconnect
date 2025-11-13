@@ -6,8 +6,7 @@ FarmConnect is a full-stack e-commerce and multi-vendor marketplace platform bui
 
 This application features a complete financial loop, including M-Pesa payments for buyers, a "Wallet" and payout system for farmers, and a refund request system, all managed by a central Admin Dashboard.
 
-![FarmConnect Homepage](https://i.imgur.com/placeholder.png)  
-*(Add a screenshot of your app's homepage here)*
+
 
 ---
 
