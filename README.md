@@ -2,7 +2,7 @@
 
 ![GitHub License](https://img.shields.io/badge/license-MIT-green.svg)
 
-FarmConnect is a full-stack e-commerce and multi-vendor marketplace platform built with React, Node.js, Express, and PostgreSQL. It's designed to connect small-scale farmers directly to buyers, cooperatives, and admins.
+FarmConnect is a full-stack e-commerce and multi-vendor(connects buyers with sellers) marketplace platform built with React, Node.js, Express, and PostgreSQL. It's designed to connect small-scale farmers directly to buyers, cooperatives, and admins.
 
 This application features a complete financial loop, including M-Pesa payments for buyers, a "Wallet" and payout system for farmers, and a refund request system, all managed by a central Admin Dashboard.
 
