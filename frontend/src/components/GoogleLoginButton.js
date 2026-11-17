@@ -4,6 +4,7 @@ import { Button } from 'react-bootstrap';
 import useAuth from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { API_ORIGIN } from '../api/config';
 
 const GoogleLoginButton = () => {
   const { login } = useAuth();
@@ -12,7 +13,7 @@ const GoogleLoginButton = () => {
   const handleGoogleLogin = () => {
     // Open the Google login page in a popup window
     const popup = window.open(
-      'http://localhost:5000/api/auth/google',
+      `${API_ORIGIN}/api/auth/google`,
       '_blank',
       'width=500,height=600'
     );
@@ -22,10 +23,8 @@ const GoogleLoginButton = () => {
     // This listener waits for the message from the popup window
     const handleMessage = (event) => {
       
-      // ** THIS IS THE FIX **
-      // The message is coming from our backend's script (port 5000),
-      // not the frontend (port 3000).
-      if (event.origin !== 'http://localhost:5000') {
+      // Only trust messages sent by our own backend's sign-in page
+      if (event.origin !== API_ORIGIN) {
         return;
       }
 

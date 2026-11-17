@@ -7,6 +7,7 @@ import Message from '../components/Message';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { formatKsh } from '../utils/format';
 
 const AdminDashboardPage = () => {
   const [payouts, setPayouts] = useState([]);
@@ -123,7 +124,7 @@ const PendingPayouts = ({ payouts, onComplete }) => (
         <tr key={payout.payout_id}>
           <td>{payout.farmer_name}</td>
           <td>{payout.phone_number}</td>
-          <td>Ksh {payout.amount}</td>
+          <td>{formatKsh(payout.amount)}</td>
           <td>{new Date(payout.requested_at).toLocaleString()}</td>
           <td>
             <Button
@@ -163,7 +164,7 @@ const PendingRefunds = ({ refunds, onProcess }) => (
         <tr key={refund.request_id}>
           <td>{refund.buyer_name}</td>
           <td>{refund.produce_name}</td>
-          <td>Ksh {refund.total_price}</td>
+          <td>{formatKsh(refund.total_price)}</td>
           <td>{refund.mpesa_receipt}</td>
           <td>{refund.reason}</td>
           <td>

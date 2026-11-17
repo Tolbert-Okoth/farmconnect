@@ -5,3 +5,11 @@ Thumbs.db
 
 # Any executables
 *.exe
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies and builds
+node_modules/
+build/

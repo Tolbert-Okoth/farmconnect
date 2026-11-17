@@ -3,7 +3,10 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const generateToken = require('../utils/jwtGenerator');
 const crypto = require('crypto'); // Add this built-in module
-const sendEmail = require('../utils/sendEmail'); // Add this
+const sendEmail = require('../utils/sendEmail');
+const { escapeHtml } = require('../utils/validate');
+
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -24,6 +27,7 @@ const googleAuthCallback = (req, res) => {
   // We'll render a simple script that saves the token in localStorage
   // and closes the popup window.
   
+  // Escape "<" so a display name like "</script>" can't break out of the script tag.
   const userData = JSON.stringify({
       _id: user.user_id,
       username: user.username,
@@ -31,13 +35,18 @@ const googleAuthCallback = (req, res) => {
       role: user.role,
       is_admin: user.is_admin,
       token: token
-  });
+  }).replace(/</g, '\\u003c');
+  const targetOrigin = JSON.stringify(FRONTEND_URL).replace(/</g, '\\u003c');
+  const nonce = crypto.randomBytes(16).toString('base64');
 
+  // Allow only this one inline script on this page
+  res.setHeader('Content-Security-Policy', `default-src 'none'; script-src 'nonce-${nonce}'`);
+  res.setHeader('Cache-Control', 'no-store');
   res.send(`
     <html>
       <body>
-        <script>
-          window.opener.postMessage(${userData}, 'http://localhost:3000');
+        <script nonce="${nonce}">
+          window.opener && window.opener.postMessage(${userData}, ${targetOrigin});
           window.close();
         </script>
         <p>Logging in... you can close this window.</p>
@@ -58,6 +67,16 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error('Invalid user role');
   }
 
+  if (String(password).length < 8) {
+    res.status(400);
+    throw new Error('Password must be at least 8 characters');
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email)) || String(username).length > 50) {
+    res.status(400);
+    throw new Error('Enter a valid email and a username up to 50 characters');
+  }
+
   // Check if user exists
   const userExists = await db.query('SELECT * FROM users WHERE email = $1', [
     email,
@@ -69,7 +88,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // Hash password
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(12);
   const password_hash = await bcrypt.hash(password, salt);
 
   // Create verification token
@@ -100,12 +119,10 @@ const registerUser = asyncHandler(async (req, res) => {
   if (user) {
     // Send verification email
     try {
-      const verifyURL = `${
-        process.env.FRONTEND_URL || 'http://localhost:3000'
-      }/verify-email/${verificationToken}`;
+      const verifyURL = `${FRONTEND_URL}/verify-email/${verificationToken}`;
 
       const message = `
-        <p>Hi ${user.username},</p>
+        <p>Hi ${escapeHtml(user.username)},</p>
         <p>Welcome to FarmConnect! Please click the link below to verify your email address:</p>
         <a href="${verifyURL}" target="_blank">Verify Your Email</a>
         <p>This link will expire in 10 minutes.</p>
@@ -195,21 +212,20 @@ const loginUser = asyncHandler(async (req, res) => {
   ]);
   const user = userQuery.rows[0];
 
-  if (!user) {
+  // Check the password first, so the response doesn't reveal which emails are registered
+  const isMatch = user ? await bcrypt.compare(String(password || ''), user.password_hash) : false;
+
+  if (!user || !isMatch) {
     res.status(401);
     throw new Error('Invalid credentials');
   }
 
-  // Check if email is verified
   if (!user.is_email_verified) {
     res.status(403);
     throw new Error('Please verify your email address before logging in.');
   }
 
-  // Check password
-  const isMatch = await bcrypt.compare(password, user.password_hash);
-
-  if (user && isMatch) {
+  {
     res.json({
       _id: user.user_id,
       username: user.username,
@@ -217,11 +233,7 @@ const loginUser = asyncHandler(async (req, res) => {
       role: user.role,
       is_admin: user.is_admin,
       token: generateToken(user.user_id, user.role),
-      
     });
-  } else {
-    res.status(401);
-    throw new Error('Invalid credentials');
   }
 });
 

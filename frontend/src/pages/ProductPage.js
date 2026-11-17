@@ -18,6 +18,7 @@ import Loader from '../components/Loader';
 import Message from '../components/Message';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
+import { formatKsh } from '../utils/format';
 
 const ProductPage = () => {
   const [product, setProduct] = useState({});
@@ -88,7 +89,7 @@ const ProductPage = () => {
                 <h3>{product.name}</h3>
               </ListGroup.Item>
               <ListGroup.Item>
-                <h5 className="text-green-dark">Ksh {product.price}</h5>
+                <h5 className="text-green-dark">{formatKsh(product.price)}</h5>
               </ListGroup.Item>
               <ListGroup.Item>
                 <strong>Quantity Available:</strong> {product.quantity}
@@ -105,7 +106,7 @@ const ProductPage = () => {
                   <Row>
                     <Col>Price:</Col>
                     <Col>
-                      <strong>Ksh {product.price}</strong>
+                      <strong>{formatKsh(product.price)}</strong>
                     </Col>
                   </Row>
                 </ListGroup.Item>

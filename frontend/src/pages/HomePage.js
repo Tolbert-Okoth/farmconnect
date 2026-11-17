@@ -32,7 +32,26 @@ const HomePage = () => {
 
   return (
     <>
-      <h1 className="text-green-dark">Latest Produce</h1>
+      {!keyword && (
+        <section className="home-hero">
+          <div>
+            <p className="home-hero-eyebrow">Farm to buyer, no middlemen</p>
+            <h1>Buy fresh produce straight from Kenyan farmers.</h1>
+            <p className="home-hero-lede">
+              Order from local farms, confirm your delivery address, and pay securely with M-Pesa.
+              Farmers see every order and get paid out from their wallet.
+            </p>
+          </div>
+          <ul className="home-hero-steps">
+            <li><span>1</span>Pick produce and quantity</li>
+            <li><span>2</span>Confirm where to deliver</li>
+            <li><span>3</span>Pay with M-Pesa on your phone</li>
+          </ul>
+        </section>
+      )}
+      <h2 className="text-green-dark section-title">
+        {keyword ? `Results for “${keyword}”` : 'Latest produce'}
+      </h2>
       {loading ? (
         <Loader />
       ) : error ? (

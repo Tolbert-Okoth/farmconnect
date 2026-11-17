@@ -6,6 +6,7 @@ import Message from '../components/Message';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
+import { formatKsh } from '../utils/format';
 
 const FarmerWalletPage = () => {
   const [summary, setSummary] = useState(null);
@@ -84,7 +85,7 @@ const FarmerWalletPage = () => {
                   <Card.Title>
                     Available for Payout:{' '}
                     <span className="text-green-dark">
-                      Ksh {summary.availableBalance}
+                      {formatKsh(summary.availableBalance)}
                     </span>
                   </Card.Title>
                   <Form onSubmit={requestPayoutHandler}>
@@ -141,7 +142,7 @@ const FarmerWalletPage = () => {
                   {history.map((payout) => (
                     <tr key={payout.payout_id}>
                       <td>{payout.payout_id.substring(0, 8)}...</td>
-                      <td>Ksh {payout.amount}</td>
+                      <td>{formatKsh(payout.amount)}</td>
                       <td>
                         <span
                           className={`badge bg-${
@@ -168,37 +169,37 @@ const FarmerWalletPage = () => {
                   <ListGroup.Item>
                     Total Value of Sales:{' '}
                     <span className="float-end">
-                      Ksh {summary.totalEarned}
+                      {formatKsh(summary.totalEarned)}
                     </span>
                   </ListGroup.Item>
                   <ListGroup.Item>
                     Platform Fee (10%):{' '}
                     <span className="float-end">
-                      -Ksh {(summary.totalEarned * 0.1).toFixed(2)}
+                      -{formatKsh(summary.totalEarned * 0.1)}
                     </span>
                   </ListGroup.Item>
                   <ListGroup.Item>
                     <strong>Net Earnings:</strong>{' '}
                     <strong className="float-end">
-                      Ksh {summary.netEarned}
+                      {formatKsh(summary.netEarned)}
                     </strong>
                   </ListGroup.Item>
                   <ListGroup.Item>
                     Total Withdrawn:{' '}
                     <span className="float-end text-danger">
-                      -Ksh {summary.totalWithdrawn}
+                      -{formatKsh(summary.totalWithdrawn)}
                     </span>
                   </ListGroup.Item>
                   <ListGroup.Item>
                     Pending Payout:{' '}
                     <span className="float-end text-warning">
-                      -Ksh {summary.pendingWithdrawal}
+                      -{formatKsh(summary.pendingWithdrawal)}
                     </span>
                   </ListGroup.Item>
                   <ListGroup.Item>
                     <h5 className="text-success">Available Balance:</h5>{' '}
                     <h5 className="float-end text-success">
-                      Ksh {summary.availableBalance}
+                      {formatKsh(summary.availableBalance)}
                     </h5>
                   </ListGroup.Item>
                 </ListGroup>

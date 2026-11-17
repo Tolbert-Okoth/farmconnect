@@ -1,13 +1,19 @@
 import axios from 'axios';
+import { API_ORIGIN } from './config';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Your backend URL
+  baseURL: `${API_ORIGIN}/api`,
 });
 
 // Interceptor to add the auth token to every request
 api.interceptors.request.use(
   (config) => {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    let userInfo = null;
+    try {
+      userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    } catch {
+      localStorage.removeItem('userInfo');
+    }
     if (userInfo && userInfo.token) {
       config.headers['Authorization'] = `Bearer ${userInfo.token}`;
     }

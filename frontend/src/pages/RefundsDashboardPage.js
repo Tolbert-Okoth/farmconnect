@@ -7,6 +7,7 @@ import api from '../api/axiosConfig';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import useAuth from '../hooks/useAuth';
+import { formatKsh } from '../utils/format';
 
 const RefundsDashboardPage = () => {
   const [myRequests, setMyRequests] = useState([]);
@@ -64,7 +65,7 @@ const RefundsDashboardPage = () => {
               <tr key={req.request_id}>
                 <td>{req.request_id.substring(0, 8)}...</td>
                 <td>{req.produce_name}</td>
-                <td>Ksh {req.total_price}</td>
+                <td>{formatKsh(req.total_price)}</td>
                 <td>{req.reason}</td>
                 <td>
                   <span

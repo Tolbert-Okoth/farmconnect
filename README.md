@@ -2,7 +2,7 @@
 
 **Built in 2025.** FarmConnect is a full-stack, multi-vendor marketplace that connects small-scale farmers in Kenya directly with buyers. It covers the whole order loop: listings, checkout with M-Pesa (sandbox), order tracking, a farmer wallet with payout requests, buyer refunds, and an admin dashboard that approves both.
 
-> **Prototype.** Payments run against the M-Pesa sandbox. Callback verification and concurrent payout handling need more work before handling real money.
+> **Prototype.** Payments run against the M-Pesa sandbox. Payment confirmation and payout locking are in place (see [Security](#security)), but the app has no automated tests and hasn't been audited for real money.
 
 ## Features
 
@@ -53,37 +53,24 @@ npm install
 npm start              # expects the API at http://localhost:5000
 ```
 
-### Backend environment variables (`backend/.env`)
+### Environment variables
 
-```env
-PORT=5000
-FRONTEND_URL=http://localhost:3000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_DATABASE=farmconnect
-JWT_SECRET=a_long_random_string
-EMAIL_USER=you@gmail.com
-EMAIL_PASS=your_app_password
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
-MPESA_CONSUMER_KEY=...
-MPESA_CONSUMER_SECRET=...
-MPESA_SHORTCODE=174379
-MPESA_PASSKEY=...
-MPESA_CALLBACK_URL=https://your-tunnel.ngrok.app/api/payments/callback
-```
+Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to `frontend/.env`, then fill them in. The backend refuses to start without a `JWT_SECRET` of at least 32 characters.
 
 The database schema is not included in this repository yet, so create the tables for users, produce, orders, payouts, refunds and messages before the first run.
 
+## Security
+
+- **Payments are confirmed with Safaricom.** The callback URL carries a secret token, and before an order is marked paid the server asks the M-Pesa STK Query API whether the payment really succeeded. Only pending orders with a confirmed address can be paid, and repeated callbacks are harmless.
+- **Order states can't be forged.** Only a confirmed payment sets "paid". Farmers can only mark a paid order delivered or cancel a pending one.
+- **No double withdrawals.** Payout requests run in a transaction with a per-farmer lock. Approved refunds take the order out of the farmer's withdrawable balance.
+- **Accounts:** bcrypt hashing, 8+ character passwords, rate-limited login and sign-up, 7-day tokens, and login errors that don't reveal which emails exist. Google sign-in requires a verified Google email.
+- **Uploads:** JPEG, PNG or WebP only, up to 5 MB.
+- Helmet headers, CORS limited to `FRONTEND_URL`, request size limits, and server-side validation of prices, quantities, phone numbers and message lengths.
+
 ## Known limitations
 
-- Payment amounts are taken from the database, but the M-Pesa callback is not yet verified against Safaricom's records.
-- Payouts are admin-approved records; money is not sent automatically to farmers.
+- Refunds and payouts are approved in the app, but the money itself moves outside it (no M-Pesa reversal or B2C yet).
 - No automated tests.
 
 ## Author

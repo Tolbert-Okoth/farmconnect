@@ -20,6 +20,7 @@ import Loader from '../components/Loader';
 import Message from '../components/Message';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
+import { formatKsh } from '../utils/format';
 
 const OrderPage = () => {
   const [order, setOrder] = useState(null);
@@ -194,7 +195,8 @@ const OrderPage = () => {
                  <Message variant={
                     order.status === 'delivered' ? 'success' :
                     order.status === 'paid' ? 'info' :
-                    order.status === 'pending' ? 'warning' : 'danger'
+                    order.status === 'pending' ? 'warning' :
+                    order.status === 'refunded' ? 'secondary' : 'danger'
                  }>
                     Status: {order.status}
                     {isPolling && order.status === 'pending' && (
@@ -219,7 +221,7 @@ const OrderPage = () => {
                 <Row>
                   <Col md={2}><Image src={order.image_url} alt={order.produce_name} fluid rounded /></Col>
                   <Col><Link to={`/product/${order.produce_id}`}>{order.produce_name}</Link></Col>
-                  <Col md={4}>{order.quantity_ordered} x Ksh {order.total_price / order.quantity_ordered} ={' '}<strong>Ksh {order.total_price}</strong></Col>
+                  <Col md={4}>{order.quantity_ordered} x {formatKsh(order.total_price / order.quantity_ordered)} ={' '}<strong>{formatKsh(order.total_price)}</strong></Col>
                 </Row>
             </ListGroup.Item>
           </ListGroup>
@@ -232,7 +234,7 @@ const OrderPage = () => {
                 <h2 className="text-green-dark">Order Summary</h2>
               </ListGroup.Item>
               <ListGroup.Item>
-                <Row><Col>Total</Col><Col>Ksh {order.total_price}</Col></Row>
+                <Row><Col>Total</Col><Col>{formatKsh(order.total_price)}</Col></Row>
               </ListGroup.Item>
 
               {userInfo.role === 'buyer' && order.status === 'pending' && (
@@ -356,7 +358,7 @@ const OrderPage = () => {
           <Modal.Body>
             <p>You are requesting a refund for:</p>
             <p>
-              <strong>{order.produce_name}</strong> (Ksh {order.total_price})
+              <strong>{order.produce_name}</strong> ({formatKsh(order.total_price)})
             </p>
             <Form.Group controlId="refundReason">
               <Form.Label>

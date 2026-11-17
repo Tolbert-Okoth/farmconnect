@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const db = require('../config/db');
+const { toPositiveAmount, toPositiveInt } = require('../utils/validate');
 const { cloudinary } = require('../utils/cloudinary');
 
 // @desc    Get all produce listings
@@ -59,9 +60,9 @@ const createProduce = asyncHandler(async (req, res) => {
 
   const { path: image_url, filename: image_public_id } = req.file;
 
-  if (!name || !price || !quantity) {
+  if (!name || !toPositiveAmount(price) || !toPositiveInt(quantity) || String(name).length > 120) {
     res.status(400);
-    throw new Error('Please provide name, price, and quantity');
+    throw new Error('Provide a name (up to 120 characters), a price above 0 and a whole-number quantity');
   }
 
   const newProduce = await db.query(
@@ -98,6 +99,12 @@ const updateProduce = asyncHandler(async (req, res) => {
   if (produce.farmer_id !== req.user.user_id) {
     res.status(403);
     throw new Error('User not authorized to update this listing');
+  }
+
+  if ((price !== undefined && price !== '' && !toPositiveAmount(price)) ||
+      (quantity !== undefined && quantity !== '' && !toPositiveInt(quantity))) {
+    res.status(400);
+    throw new Error('Price must be above 0 and quantity a whole number');
   }
 
   // 3. Prepare new data

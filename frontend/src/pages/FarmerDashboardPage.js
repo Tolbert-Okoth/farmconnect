@@ -7,6 +7,7 @@ import Loader from '../components/Loader';
 import Message from '../components/Message';
 import useAuth from '../hooks/useAuth';
 import { toast } from 'react-toastify';
+import { formatKsh } from '../utils/format';
 
 const FarmerDashboardPage = () => {
   const [myProduce, setMyProduce] = useState([]);
@@ -141,7 +142,7 @@ const ProduceList = ({ produce, deleteHandler }) => (
           {produce.map((p) => (
             <tr key={p.produce_id}>
               <td>{p.name}</td>
-              <td>Ksh {p.price}</td>
+              <td>{formatKsh(p.price)}</td>
               <td>{p.quantity}</td>
               <td>
                 <LinkContainer to={`/farmer/produce/${p.produce_id}/edit`}>
@@ -189,7 +190,7 @@ const OrderList = ({ orders }) => (
               <td>{order.order_id.substring(0, 8)}...</td>
               <td>{order.buyer_name}</td>
               <td>{order.produce_name}</td>
-              <td>Ksh {order.total_price}</td>
+              <td>{formatKsh(order.total_price)}</td>
               <td>
                 <span
                   className={`badge bg-${

@@ -13,8 +13,12 @@ module.exports = function (passport) {
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
-          // 1. Check if user already exists
-          const email = profile.emails[0].value;
+          // 1. Only accept Google accounts with a verified email
+          const primary = profile.emails && profile.emails[0];
+          if (!primary || primary.verified === false) {
+            return done(null, false);
+          }
+          const email = primary.value;
           const userQuery = await db.query(
             'SELECT * FROM users WHERE email = $1',
             [email]
@@ -31,7 +35,7 @@ module.exports = function (passport) {
               `INSERT INTO users (username, email, password_hash, role, is_email_verified)
                VALUES ($1, $2, $3, 'buyer', true)
                RETURNING *`,
-              [profile.displayName, email, 'google_oauth_user'] // No real password
+              [profile.displayName, email, '!google-oauth-no-password'] // not a valid bcrypt hash, so password login is impossible
             );
             user = newUser.rows[0];
             return done(null, user);

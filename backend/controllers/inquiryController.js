@@ -5,17 +5,24 @@ const db = require('../config/db');
 // @route   POST /api/inquiries
 // @access  Private
 const sendMessage = asyncHandler(async (req, res) => {
-  const { receiver_id, content } = req.body;
+  const { receiver_id } = req.body;
+  const content = String(req.body.content || '').trim();
   const sender_id = req.user.user_id;
 
-  if (!receiver_id || !content) {
+  if (!receiver_id || !content || content.length > 2000) {
     res.status(400);
-    throw new Error('Receiver ID and content are required');
+    throw new Error('Receiver ID and a message (up to 2000 characters) are required');
   }
 
-  if (receiver_id === sender_id) {
+  if (String(receiver_id) === String(sender_id)) {
     res.status(400);
     throw new Error('Cannot send message to yourself');
+  }
+
+  const receiver = await db.query('SELECT 1 FROM users WHERE user_id = $1', [receiver_id]);
+  if (receiver.rows.length === 0) {
+    res.status(404);
+    throw new Error('Recipient not found');
   }
 
   const newMessage = await db.query(

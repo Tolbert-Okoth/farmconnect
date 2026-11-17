@@ -59,20 +59,31 @@ const processRefund = asyncHandler(async (req, res) => {
     throw new Error('Invalid status');
   }
 
-  const data = await db.query(
-    "UPDATE refund_requests SET status = $1, processed_at = NOW() WHERE request_id = $2 AND status = 'pending' RETURNING *",
-    [status, id]
-  );
-
-  if (data.rows.length === 0) {
-    res.status(404);
-    throw new Error('Pending refund request not found');
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    const data = await client.query(
+      "UPDATE refund_requests SET status = $1, processed_at = NOW() WHERE request_id = $2 AND status = 'pending' RETURNING *",
+      [status, id]
+    );
+    if (data.rows.length === 0) {
+      await client.query('ROLLBACK');
+      res.status(404);
+      throw new Error('Pending refund request not found');
+    }
+    if (status === 'approved') {
+      // A refunded order must no longer count towards the farmer's withdrawable earnings.
+      await client.query("UPDATE orders SET status = 'refunded' WHERE order_id = $1", [data.rows[0].order_id]);
+    }
+    await client.query('COMMIT');
+    // Note: the money itself is returned outside the app (M-Pesa reversal is not automated).
+    res.json(data.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
-  
-  // In a real app, if 'approved', you would also trigger the Mpesa Reversal API here.
-  // For now, we just update the status.
-
-  res.json(data.rows[0]);
 });
 
 module.exports = {

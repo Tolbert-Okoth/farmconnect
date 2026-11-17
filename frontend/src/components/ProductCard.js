@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { formatKsh } from '../utils/format';
 
 const ProductCard = ({ product }) => {
   return (
@@ -8,8 +9,10 @@ const ProductCard = ({ product }) => {
       <Link to={`/product/${product.produce_id}`}>
         <Card.Img
           src={product.image_url}
+          alt={product.name}
+          loading="lazy"
           variant="top"
-          style={{ height: '200px', objectFit: 'cover' }}
+          className="product-card-img"
         />
       </Link>
       <Card.Body>
@@ -25,10 +28,12 @@ const ProductCard = ({ product }) => {
           <small className="text-muted">Sold by {product.farmer_name}</small>
         </Card.Text>
         <Card.Text as="h5" className="text-green-dark">
-          Ksh {product.price}
+          {formatKsh(product.price)}
         </Card.Text>
         <Card.Text as="div">
-          <small>{product.quantity} available</small>
+          <span className={`stock-pill ${Number(product.quantity) > 0 ? '' : 'out'}`}>
+            {Number(product.quantity) > 0 ? `${product.quantity} available` : 'Sold out'}
+          </span>
         </Card.Text>
       </Card.Body>
     </Card>

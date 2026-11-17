@@ -1,5 +1,8 @@
 const asyncHandler = require('express-async-handler');
 const db = require('../config/db');
+const { toPositiveAmount, toKenyanMsisdn } = require('../utils/validate');
+
+const PLATFORM_FEE = 0.10; // 10% platform fee on delivered orders
 
 // @desc    Get farmer's earnings summary
 // @route   GET /api/payouts/summary
@@ -29,8 +32,7 @@ const getEarningsSummary = asyncHandler(async (req, res) => {
   const pendingWithdrawal = parseFloat(pendingPayouts.rows[0].total) || 0;
 
   // 4. Calculate available balance (This assumes a 10% platform fee)
-  const platformFee = 0.10;
-  const netEarned = totalEarned * (1 - platformFee);
+  const netEarned = totalEarned * (1 - PLATFORM_FEE);
   const availableBalance = netEarned - totalWithdrawn - pendingWithdrawal;
 
   res.json({
@@ -46,39 +48,55 @@ const getEarningsSummary = asyncHandler(async (req, res) => {
 // @route   POST /api/payouts/request
 // @access  Private (Farmer)
 const requestPayout = asyncHandler(async (req, res) => {
-  const { amount, phone } = req.body;
   const farmer_id = req.user.user_id;
+  const amount = toPositiveAmount(req.body.amount);
+  const phone = toKenyanMsisdn(req.body.phone);
 
-  // 1. Update/save the farmer's phone number
-  await db.query('UPDATE users SET phone_number = $1 WHERE user_id = $2', [phone, farmer_id]);
-
-  // 2. Get their available balance
-  // (We're re-running the logic from getEarningsSummary - this should be a separate service in a real app)
-  const completedOrders = await db.query("SELECT SUM(total_price) AS total FROM orders WHERE farmer_id = $1 AND status = 'delivered'", [farmer_id]);
-  const totalEarned = parseFloat(completedOrders.rows[0].total) || 0;
-  const totalPaidOut = await db.query("SELECT SUM(amount) AS total FROM payouts WHERE farmer_id = $1 AND (status = 'completed' OR status = 'pending')", [farmer_id]);
-  const totalWithdrawn = parseFloat(totalPaidOut.rows[0].total) || 0;
-  
-  const netEarned = totalEarned * (1 - 0.10); // 10% fee
-  const availableBalance = netEarned - totalWithdrawn;
-
-  if (amount <= 0) {
+  if (!amount) {
     res.status(400);
     throw new Error('Invalid payout amount');
   }
-  
-  if (amount > availableBalance) {
+  if (!phone) {
     res.status(400);
-    throw new Error('Insufficient funds. Your available balance is ' + availableBalance.toFixed(2));
+    throw new Error('Enter a valid Safaricom number, e.g. 0712345678');
   }
-  
-  // 3. Create the payout request
-  const newPayout = await db.query(
-    'INSERT INTO payouts (farmer_id, amount) VALUES ($1, $2) RETURNING *',
-    [farmer_id, amount]
-  );
-  
-  res.status(201).json(newPayout.rows[0]);
+
+  // One transaction with a per-farmer lock, so two quick requests can't both
+  // pass the balance check and withdraw the same money twice.
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock($1)', [farmer_id]);
+    await client.query('UPDATE users SET phone_number = $1 WHERE user_id = $2', [phone, farmer_id]);
+
+    const earned = await client.query(
+      "SELECT COALESCE(SUM(total_price), 0) AS total FROM orders WHERE farmer_id = $1 AND status = 'delivered'",
+      [farmer_id]
+    );
+    const withdrawn = await client.query(
+      "SELECT COALESCE(SUM(amount), 0) AS total FROM payouts WHERE farmer_id = $1 AND status IN ('completed', 'pending')",
+      [farmer_id]
+    );
+    const availableBalance = Number(earned.rows[0].total) * (1 - PLATFORM_FEE) - Number(withdrawn.rows[0].total);
+
+    if (amount > availableBalance + 1e-9) {
+      await client.query('ROLLBACK');
+      res.status(400);
+      throw new Error('Insufficient funds. Your available balance is ' + availableBalance.toFixed(2));
+    }
+
+    const newPayout = await client.query(
+      'INSERT INTO payouts (farmer_id, amount) VALUES ($1, $2) RETURNING *',
+      [farmer_id, amount]
+    );
+    await client.query('COMMIT');
+    res.status(201).json(newPayout.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
 });
 
 // @desc    Get farmer's payout history

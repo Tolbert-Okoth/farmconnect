@@ -5,12 +5,13 @@ const db = require('../config/db');
 // @route   POST /api/refunds/request
 // @access  Private (Buyer)
 const requestRefund = asyncHandler(async (req, res) => {
-  const { order_id, reason } = req.body;
+  const { order_id } = req.body;
+  const reason = String(req.body.reason || '').trim();
   const buyer_id = req.user.user_id;
 
-  if (!order_id || !reason) {
+  if (!order_id || !reason || reason.length > 1000) {
     res.status(400);
-    throw new Error('Order ID and reason are required');
+    throw new Error('Order ID and a reason (up to 1000 characters) are required');
   }
 
   // 1. Check if the order exists, belongs to the buyer, and is 'paid' or 'delivered'

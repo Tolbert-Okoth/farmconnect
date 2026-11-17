@@ -6,6 +6,7 @@ import api from '../api/axiosConfig';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import useAuth from '../hooks/useAuth';
+import { formatKsh } from '../utils/format';
 
 const BuyerDashboardPage = () => {
   // ... (all state and functions remain the same) ...
@@ -84,7 +85,7 @@ const BuyerDashboardPage = () => {
                 <td>{order.order_id.substring(0, 8)}...</td>
                 <td>{order.produce_name}</td>
                 <td>{order.farmer_name}</td>
-                <td>Ksh {order.total_price}</td>
+                <td>{formatKsh(order.total_price)}</td>
                 <td>
                   <span
                     className={`badge bg-${
