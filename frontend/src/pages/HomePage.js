@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col } from 'react-bootstrap';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import ProductCard from '../components/ProductCard';
 import Loader from '../components/Loader';
@@ -33,25 +33,35 @@ const HomePage = () => {
   return (
     <>
       {!keyword && (
-        <section className="home-hero">
+        <section className="soko-hero">
           <div>
-            <p className="home-hero-eyebrow">Farm to buyer, no middlemen</p>
-            <h1>Buy fresh produce straight from Kenyan farmers.</h1>
-            <p className="home-hero-lede">
-              Order from local farms, confirm your delivery address, and pay securely with M-Pesa.
-              Farmers see every order and get paid out from their wallet.
+            <span className="soko-kicker">Market day, every day</span>
+            <h1>
+              Straight from the shamba, <em>to your door.</em>
+            </h1>
+            <p className="soko-hero-lede">
+              Buy fresh produce directly from Kenyan farmers. No middlemen, fair prices for growers,
+              and you pay securely with M-Pesa when you&apos;re ready.
             </p>
+            <div className="soko-hero-actions">
+              <a href="#market" className="btn btn-secondary">Browse the market</a>
+              <Link to="/register" className="btn btn-light">Sell your harvest</Link>
+            </div>
           </div>
-          <ul className="home-hero-steps">
-            <li><span>1</span>Pick produce and quantity</li>
-            <li><span>2</span>Confirm where to deliver</li>
-            <li><span>3</span>Pay with M-Pesa on your phone</li>
-          </ul>
+          <aside className="soko-board" aria-label="How it works">
+            <h2>How soko day works</h2>
+            <ol>
+              <li><div><strong>Pick from a farm</strong><span>Choose produce and how much you need.</span></div></li>
+              <li><div><strong>Confirm delivery</strong><span>Tell the farmer where to bring it.</span></div></li>
+              <li><div><strong>Pay with M-Pesa</strong><span>Approve the prompt on your phone.</span></div></li>
+            </ol>
+          </aside>
         </section>
       )}
-      <h2 className="text-green-dark section-title">
-        {keyword ? `Results for “${keyword}”` : 'Latest produce'}
-      </h2>
+      <div className="section-head" id="market">
+        <h2>{keyword ? <>Results for &ldquo;{keyword}&rdquo;</> : 'Fresh on the stalls'}</h2>
+        {!loading && !error && <p>{products.length} listing{products.length === 1 ? '' : 's'}</p>}
+      </div>
       {loading ? (
         <Loader />
       ) : error ? (
@@ -59,7 +69,12 @@ const HomePage = () => {
       ) : (
         <Row>
           {products.length === 0 && (
-            <Message>No produce found. Check back later!</Message>
+            <Col xs={12}>
+              <div className="soko-empty">
+                <strong>The stalls are empty</strong>
+                {keyword ? 'Nothing matches that search. Try another crop.' : 'Farmers are restocking. Check back soon.'}
+              </div>
+            </Col>
           )}
           {products.map((product) => (
             <Col key={product.produce_id} sm={12} md={6} lg={4} xl={3}>

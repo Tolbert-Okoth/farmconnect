@@ -4,6 +4,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import SearchBox from './SearchBox';
+import BrandMark from './BrandMark';
 
 const Header = () => {
   const { userInfo, logout } = useAuth();
@@ -15,12 +16,13 @@ const Header = () => {
   };
 
   return (
-    <header>
-      <Navbar className="bg-green-dark" variant="dark" expand="lg" collapseOnSelect>
+    <header className="soko-header">
+      <div className="soko-awning" aria-hidden="true" />
+      <Navbar expand="lg" collapseOnSelect>
         <Container>
           <LinkContainer to="/">
-            <Navbar.Brand>
-              <i className="fas fa-leaf"></i> FarmConnect
+            <Navbar.Brand className="soko-brand">
+              <BrandMark /> <span>Farm<em>Connect</em></span>
             </Navbar.Brand>
           </LinkContainer>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -63,9 +65,7 @@ const Header = () => {
                 </NavDropdown>
               ) : (
                 <LinkContainer to="/login">
-                  <Nav.Link>
-                    <i className="fas fa-user"></i> Sign In
-                  </Nav.Link>
+                  <Nav.Link className="soko-signin">Sign in</Nav.Link>
                 </LinkContainer>
               )}
             </Nav>

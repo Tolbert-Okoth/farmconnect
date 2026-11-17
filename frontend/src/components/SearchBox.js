@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Form, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 const SearchBox = () => {
@@ -8,8 +7,9 @@ const SearchBox = () => {
 
   const submitHandler = (e) => {
     e.preventDefault();
-    if (keyword.trim()) {
-      navigate(`/search/${keyword}`);
+    const q = keyword.trim();
+    if (q) {
+      navigate(`/search/${encodeURIComponent(q)}`);
       setKeyword('');
     } else {
       navigate('/');
@@ -17,19 +17,20 @@ const SearchBox = () => {
   };
 
   return (
-    <Form onSubmit={submitHandler} className="d-flex ms-auto">
-      <Form.Control
-        type="text"
+    <form onSubmit={submitHandler} className="soko-search" role="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#7a6352" strokeWidth="2.2" strokeLinecap="round">
+        <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+      </svg>
+      <input
+        type="search"
         name="q"
+        aria-label="Search produce"
         onChange={(e) => setKeyword(e.target.value)}
         value={keyword}
-        placeholder="Search Produce..."
-        className="me-sm-2 ms-sm-5"
-      ></Form.Control>
-      <Button type="submit" variant="outline-light" className="p-2">
-        Search
-      </Button>
-    </Form>
+        placeholder="Search sukuma, avocado, maize…"
+      />
+      <button type="submit">Search</button>
+    </form>
   );
 };
 
