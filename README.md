@@ -1,83 +1,91 @@
-# 🌿 FarmConnect
+# FarmConnect
 
-![GitHub License](https://img.shields.io/badge/license-MIT-green.svg)
+**Built in 2025.** FarmConnect is a full-stack, multi-vendor marketplace that connects small-scale farmers in Kenya directly with buyers. It covers the whole order loop: listings, checkout with M-Pesa (sandbox), order tracking, a farmer wallet with payout requests, buyer refunds, and an admin dashboard that approves both.
 
-FarmConnect is a full-stack e-commerce and multi-vendor(connects buyers with sellers) marketplace platform built with React, Node.js, Express, and PostgreSQL. It's designed to connect small-scale farmers directly to buyers, cooperatives, and admins.
+> **Prototype.** Payments run against the M-Pesa sandbox. Callback verification and concurrent payout handling need more work before handling real money.
 
-This application features a complete financial loop, including M-Pesa payments for buyers, a "Wallet" and payout system for farmers, and a refund request system, all managed by a central Admin Dashboard.
+## Features
 
+**Accounts and roles**
+- Three roles (buyer, farmer, admin) with role-protected API routes
+- Email/password sign-up with JWT and bcrypt, email verification via Nodemailer, and Google sign-in via Passport.js
 
+**Listings and orders**
+- Farmers create, edit and delete produce listings with Cloudinary image uploads
+- Public search across listing names and descriptions
+- Checkout flow: place order → confirm delivery address → pay with M-Pesa STK Push; the order page polls until the payment callback marks it paid
+- Farmers mark orders delivered; either side can cancel a pending order
 
----
+**Money flow**
+- Farmer wallet showing delivered sales, a 10% platform fee and the available balance
+- Farmers request payouts; buyers request refunds on paid or delivered orders
+- Admin dashboard to approve or reject payout and refund requests
 
-## ✨ Core Features
+**Messaging**
+- Basic one-to-one chat between buyer and farmer about an order
 
-### 1. Authentication & User Roles
-* **Multi-Role System:** Three distinct user roles: **Buyer**, **Farmer**, and **Admin**.
-* **Email/Password Auth:** Secure registration and login using JWT and `bcrypt`.
-* **Email Verification:** Users must verify their email (via `nodemailer`) before they can log in.
-* **Google OAuth:** Users can sign up or log in instantly with their Google account (`passport.js`).
-* **Role-Protected Routes:** Backend middleware (`isAdmin`, `isFarmer`) secures all sensitive API endpoints.
+## Tech stack
 
-### 2. E-Commerce & Listings
-* **Product CRUD:** Farmers can create, read, update, and delete their own produce listings.
-* **Image Uploads:** Seamless image uploads to **Cloudinary**, including support for updating/replacing images.
-* **Search:** A public search bar to filter listings by name or description.
-* **Real-time Polling:** After payment, the order page automatically polls the backend and updates to "Paid" in real-time.
+| Part | Technology |
+|---|---|
+| Frontend | React, React Router, React-Bootstrap, Axios, React-Toastify |
+| Backend | Node.js, Express, PostgreSQL (`pg`) |
+| Auth | JWT, bcryptjs, Passport.js (Google OAuth 2.0) |
+| Payments | M-Pesa Daraja API, STK Push (sandbox) |
+| Media and email | Cloudinary, Multer, Nodemailer |
 
-### 3. Payment & Order Logistics
-* **M-Pesa STK Push:** Full integration with the M-Pesa API for payments.
-* **Multi-Step Checkout:**
-    1.  Buyer places an order (status: `pending`).
-    2.  Buyer must **confirm their delivery address** before payment is enabled.
-    3.  Buyer pays via M-Pesa.
-* **Order Management:** Buyers and Farmers can view their order history. Farmers can update order status (e.g., "Mark as Delivered").
-* **Cancellations:** Buyers and Farmers can cancel a `pending` order, which removes it from the database.
+## Run locally
 
-### 4. Marketplace Financial Loop
-* **Farmer Wallet & Payouts:**
-    * Farmers have a "Wallet" page showing their total sales, platform fees (10%), and available balance.
-    * Farmers can request a payout of their available funds.
-* **Buyer Refunds:**
-    * Buyers can request a refund for any `paid` or `delivered` order by providing a reason.
-* **Admin Dashboard:**
-    * A secure admin-only dashboard to view all pending payout and refund requests.
-    * Admins can **Approve** or **Reject** requests, which updates the status for the user.
-
-### 5. User Interaction
-* **1-to-1 Chat:** A basic messaging system for buyers and farmers to communicate about orders.
-
----
-
-## 💻 Tech Stack
-
-| Category         | Technology                                                                |
-| ---------------- | ------------------------------------------------------------------------- |
-| **Frontend** | React, React Router, React-Bootstrap, Bootstrap 5, Axios, React-Toastify  |
-| **Backend** | Node.js, Express.js, `cors`                                               |
-| **Database** | PostgreSQL, `pg` (node-postgres)                                          |
-| **Authentication** | JSON Web Tokens (JWT), `bcryptjs`, Passport.js, `passport-google-oauth20` |
-| **Payments** | M-Pesa API (STK Push, B2C), `axios`, `ngrok` (for development)            |
-| **Image Storage** | Cloudinary, `multer`, `multer-storage-cloudinary`                         |
-| **Email** | Nodemailer (Gmail)                                                        |
-
----
-
-## 🚀 Getting Started
-
-Follow these instructions to get the project running on your local machine.
-
-### Prerequisites
-
-* [Node.js](https://nodejs.org/en/) (v18+)
-* [PostgreSQL](https://www.postgresql.org/download/)
-* [ngrok](https://ngrok.com/download)
-* A [Cloudinary](https://cloudinary.com/) account
-* A [Safaricom M-Pesa Developer](https://developer.safaricom.co.ke/) account
-* A [Google Cloud Console](https://console.cloud.google.com/) project for OAuth
-
-### 1. Clone the Repository
+Requirements: Node.js 18+, PostgreSQL, and accounts for Cloudinary, the Safaricom Daraja sandbox and Google OAuth. M-Pesa needs a public callback URL, so use a tunnel such as ngrok during development.
 
 ```bash
-git clone [https://github.com/your-username/farmconnect.git](https://github.com/your-username/farmconnect.git)
+git clone https://github.com/Tolbert-Okoth/farmconnect.git
 cd farmconnect
+
+# Backend
+cd backend
+npm install
+npm run dev            # serves on PORT (default 5000)
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm start              # expects the API at http://localhost:5000
+```
+
+### Backend environment variables (`backend/.env`)
+
+```env
+PORT=5000
+FRONTEND_URL=http://localhost:3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_DATABASE=farmconnect
+JWT_SECRET=a_long_random_string
+EMAIL_USER=you@gmail.com
+EMAIL_PASS=your_app_password
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+MPESA_CONSUMER_KEY=...
+MPESA_CONSUMER_SECRET=...
+MPESA_SHORTCODE=174379
+MPESA_PASSKEY=...
+MPESA_CALLBACK_URL=https://your-tunnel.ngrok.app/api/payments/callback
+```
+
+The database schema is not included in this repository yet, so create the tables for users, produce, orders, payouts, refunds and messages before the first run.
+
+## Known limitations
+
+- Payment amounts are taken from the database, but the M-Pesa callback is not yet verified against Safaricom's records.
+- Payouts are admin-approved records; money is not sent automatically to farmers.
+- No automated tests.
+
+## Author
+
+Built by **Tolbert Okoth**: [Portfolio](https://tolbert-portfolio.vercel.app) · [GitHub](https://github.com/Tolbert-Okoth) · [LinkedIn](https://www.linkedin.com/in/tolbert-asumba-542b3b344)
